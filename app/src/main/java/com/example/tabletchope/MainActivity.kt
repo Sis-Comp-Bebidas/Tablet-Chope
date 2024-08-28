@@ -28,13 +28,14 @@ class MainActivity : AppCompatActivity() {
         temperatureDisplay = TemperatureDisplay() // Inicializa a conexão com o sensor de temperatura
 
 
+        // Configura os TextViews
         creditsTextView = findViewById(R.id.credits_text_view)
         temperatureTextView = findViewById(R.id.temperature_text_view)
         updateCreditsText()
 
+        // Configura os botões
         val buttonOpen: Button = findViewById(R.id.button_open)
         val buttonClose: Button = findViewById(R.id.button_close)
-        val buttonGetTemperature: Button = findViewById(R.id.button_get_temperature)
 
         buttonOpen.setOnClickListener {
             valveController.openValve()
@@ -45,22 +46,20 @@ class MainActivity : AppCompatActivity() {
             valveController.closeValve()
         }
 
-        buttonGetTemperature.setOnClickListener {
-            getTemperature()
-        }
+        // Inicia a atualização automática da temperatura
+        temperatureDisplay = TemperatureDisplay(serialConnection, temperatureTextView)
+        temperatureDisplay.startTemperatureUpdates()
+        
     }
 
     private fun updateCreditsText() {
         creditsTextView.text = "Credits: ${valveController.getCredits()}"
     }
 
-    private fun getTemperature() {
-        val temperature = temperatureDisplay.requestTemperature()
-        temperatureTextView.text = "Temperatura: $temperature"
-    }
     override fun onDestroy() {
         super.onDestroy()
         serialConnection.close()
-        temperatureDisplay.close()
+        temperatureDisplay.stopTemperatureUpdates()
     }
+    
 }
