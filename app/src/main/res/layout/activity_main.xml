@@ -1,33 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    android:padding="16dp">
 
+    <!-- TextView para mostrar os créditos -->
     <TextView
         android:id="@+id/credits_text_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Credits: 10"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="20dp"/>
+        android:textSize="18sp"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"/>
 
+    <!-- TextView para mostrar a temperatura -->
+    <TextView
+        android:id="@+id/temperature_text_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Temperatura: -- °C"
+        android:textSize="18sp"
+        android:layout_below="@id/credits_text_view"
+        android:layout_marginTop="16dp"
+        android:layout_centerHorizontal="true"/>
+
+    <!-- Botão para abrir a válvula -->
     <Button
         android:id="@+id/button_open"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="OPEN"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="50dp"/>
+        android:text="Abrir Válvula"
+        android:layout_below="@id/temperature_text_view"
+        android:layout_marginTop="32dp"
+        android:layout_centerHorizontal="true"/>
 
+    <!-- Botão para fechar a válvula -->
     <Button
         android:id="@+id/button_close"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="CLOSE"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="150dp"/>
+        android:text="Fechar Válvula"
+        android:layout_below="@id/button_open"
+        android:layout_marginTop="16dp"
+        android:layout_centerHorizontal="true"/>
 
 </RelativeLayout>
-
