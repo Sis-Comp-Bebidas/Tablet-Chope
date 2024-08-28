@@ -1,51 +1,53 @@
 package com.example.serialcommunication
 
-import android.hardware.usb.UsbManager
-import com.hoho.android.usbserial.driver.UsbSerialPort
-import com.hoho.android.usbserial.driver.UsbSerialProber
-import com.hoho.android.usbserial.util.SerialInputOutputManager
-import java.util.concurrent.Executors
+import android.util.Log
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.net.Socket
 
-class SerialConnection(private val usbManager: UsbManager) {
+class SerialConnection {
 
-    private var serialPort: UsbSerialPort? = null
+    private var ipAddress: String? = null
+    private var socket: Socket? = null
 
-    fun findSerialPortDevice() {
-        val availableDrivers = UsbSerialProber.getDefaultProber().findAllDrivers(usbManager)
-        if (availableDrivers.isEmpty()) {
-            return
+    init {
+        ipAddress = getUsb0IpAddress()
+    }
+
+    private fun getUsb0IpAddress(): String? {
+        try {
+            val process = Runtime.getRuntime().exec("ip -4 addr show usb0")
+            val reader = BufferedReader(InputStreamReader(process.inputStream))
+            var line: String?
+            while (reader.readLine().also { line = it } != null) {
+                if (line!!.trim().startsWith("inet ")) {
+                    return line!!.split(" ")[1].split("/")[0]
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("SerialConnection", "Erro ao obter IP da interface usb0", e)
         }
+        return null
+    }
 
-        val driver = availableDrivers[0]
-        val connection = usbManager.openDevice(driver.device) ?: return
-
-        serialPort = driver.ports[0]
-        serialPort?.open(connection)
-        serialPort?.setParameters(
-            9600,
-            UsbSerialPort.DATABITS_8,
-            UsbSerialPort.STOPBITS_1,
-            UsbSerialPort.PARITY_NONE
-        )
-
-        val usbIoManager = SerialInputOutputManager(serialPort, object : SerialInputOutputManager.Listener {
-            override fun onNewData(data: ByteArray?) {
-                // Handle incoming data if needed
+    fun connect() {
+        ipAddress?.let {
+            try {
+                socket = Socket(it, 22)
+                Log.d("SerialConnection", "Conectado ao servidor TCP/IP $ipAddress:22 com sucesso.")
+            } catch (e: Exception) {
+                Log.e("SerialConnection", "Erro ao conectar ao servidor TCP/IP $ipAddress:22", e)
             }
-
-            override fun onRunError(e: Exception?) {
-                // Handle errors if needed
-            }
-        })
-
-        Executors.newSingleThreadExecutor().submit(usbIoManager)
+        } ?: run {
+            Log.e("SerialConnection", "Não foi possível determinar o IP da interface de rede.")
+        }
     }
 
     fun sendCommand(command: String) {
-        serialPort?.write(command.toByteArray(), 1000)
+        socket?.getOutputStream()?.write((command + "\n").toByteArray())
     }
 
     fun close() {
-        serialPort?.close()
+        socket?.close()
     }
 }
