@@ -1,48 +1,45 @@
 package com.example.serialcommunication
 
-import java.io.BufferedReader
-import java.io.InputStreamReader
-import java.io.PrintWriter
-import java.net.Socket
+import android.os.Handler
+import android.os.Looper
+import android.widget.TextView
 
-class TemperatureDisplay(private val ipAddress: String, private val port: Int) {
+class TemperatureDisplay(
+        private val serialConnection: SerialConnection,
+        private val temperatureTextView: TextView
+) {
+    private val handler = Handler(Looper.getMainLooper())
+    private var isUpdating = false
 
-    private var socket: Socket? = null
-    private var out: PrintWriter? = null
-    private var `in`: BufferedReader? = null
+    private val updateInterval = 5000L // Intervalo de 5 segundos para as atualizações
 
-    init {
-        connect()
+    // Método para iniciar as atualizações automáticas da temperatura
+    fun startTemperatureUpdates() {
+        isUpdating = true
+        handler.post(updateRunnable)
     }
 
-    private fun connect() {
-        try {
-            socket = Socket(ipAddress, port)
-            out = PrintWriter(socket?.getOutputStream(), true)
-            `in` = BufferedReader(InputStreamReader(socket?.getInputStream()))
-        } catch (e: Exception) {
-            e.printStackTrace()
+    // Runnable que será executado periodicamente para solicitar e atualizar a temperatura
+    private val updateRunnable = object : Runnable {
+        override fun run() {
+            if (isUpdating) {
+                val temperature = requestTemperature()
+                temperatureTextView.text = "Temperatura: $temperature"
+                handler.postDelayed(this, updateInterval)
+            }
         }
     }
 
+    // Método para interromper as atualizações automáticas da temperatura
+    fun stopTemperatureUpdates() {
+        isUpdating = false
+        handler.removeCallbacks(updateRunnable)
+    }
+
+    // Método para solicitar a temperatura da Raspberry Pi via TCP
     fun requestTemperature(): String {
-        return try {
-            out?.println("ler_sensor")
-            val response = `in`?.readLine()
-            response ?: "Sem resposta do servidor."
-        } catch (e: Exception) {
-            e.printStackTrace()
-            "Erro ao solicitar a temperatura."
-        }
-    }
-
-    fun close() {
-        try {
-            out?.close()
-            `in`?.close()
-            socket?.close()
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
+        serialConnection.sendCommand("ler_sensor")
+        return serialConnection.receiveResponse()
     }
 }
+
